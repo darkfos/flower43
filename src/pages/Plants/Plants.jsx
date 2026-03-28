@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DetailFlowerModal } from '../../components/DetailFlowerModal';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import './Plants.css';
+import { apiUrl } from '../../utils/apiConfig';
 
 const categories = [
   { id: 'all', name: 'Все растения', dbField: null },
@@ -85,7 +86,7 @@ export default function Plants() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('http://localhost:5000/api/products/plants');
+        const response = await fetch(`${apiUrl}/products/plants`);
         
         if (!response.ok) {
           throw new Error(`Ошибка сервера: ${response.status}`);
