@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+
+import { DetailFlowerModal } from '../DetailFlowerModal';
 import ProductCard from '../ProductCard/ProductCard';
 import './BouquetShowcase.css';
 
 const BouquetShowcase = () => {
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewDetail, setViewDetail] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -42,7 +46,7 @@ const BouquetShowcase = () => {
   };
 
   const handleQuickView = (product) => {
-    console.log('Быстрый просмотр:', product);
+    setViewDetail(product);
   };
 
   if (loading) {
@@ -132,6 +136,10 @@ const BouquetShowcase = () => {
           </div>
         </div>
       </div>
+
+      { viewDetail && (
+        <DetailFlowerModal product={viewDetail} typeFlower="Букет" handleClose={() => setViewDetail(null) } />
+      ) }
     </section>
   );
 };

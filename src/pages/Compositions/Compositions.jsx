@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+import { DetailFlowerModal } from '../../components/DetailFlowerModal';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import './Compositions.css';
 
@@ -29,10 +31,12 @@ const sortOptions = [
 ];
 
 export default function Compositions() {
+
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewDetail, setViewDetail] = useState();
   
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPrice, setSelectedPrice] = useState('all');
@@ -171,7 +175,7 @@ export default function Compositions() {
   }, [searchTimeout]);
 
   const handleQuickView = (product) => {
-    alert(`Быстрый просмотр: ${product.name}\nЦена: ${product.price} ₽\nТип: Композиция`);
+    setViewDetail(product);
   };
 
   const getDisplayedProductsCount = () => {
@@ -406,6 +410,10 @@ export default function Compositions() {
           </div>
         </section>
       </div>
+
+      { viewDetail && (
+        <DetailFlowerModal product={viewDetail} typeFlower="Сборка" handleClose={() => setViewDetail(null)} />
+      ) }
     </div>
   );
 }

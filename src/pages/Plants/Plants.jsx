@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+
+import { DetailFlowerModal } from '../../components/DetailFlowerModal';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import './Plants.css';
 
@@ -37,10 +38,12 @@ const sortOptions = [
 ];
 
 export default function Plants() {
+
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewDetail, setViewDetail] = useState();
   
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPrice, setSelectedPrice] = useState('all');
@@ -226,14 +229,7 @@ export default function Plants() {
   }, [searchTimeout]);
 
   const handleQuickView = (plant) => {
-    console.log('Быстрый просмотр растения:', plant);
-    const message = `Быстрый просмотр: ${plant.name}
-Цена: ${plant.price} ₽
-${plant.care_level ? `Уход: ${plant.care_level}` : ''}
-${plant.height ? `Высота: ${plant.height}` : ''}
-${plant.light ? `Освещение: ${plant.light}` : ''}`;
-    
-    alert(message);
+    setViewDetail(plant);
   };
 
   const getDisplayedProductsCount = () => {
@@ -453,7 +449,9 @@ ${plant.light ? `Освещение: ${plant.light}` : ''}`;
             </div>
           )}
         </section>
-
+        { viewDetail && (
+          <DetailFlowerModal product={viewDetail} typeFlower="Растения" handleClose={() => setViewDetail(null) } />
+        ) }
       </div>
     </div>
   );

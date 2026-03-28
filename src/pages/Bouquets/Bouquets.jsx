@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import './Bouquets.css';
+import { DetailFlowerModal } from '../../components/DetailFlowerModal';
 
 const categories = [
   { id: 'all', name: 'Все букеты', dbField: null },
@@ -27,10 +28,12 @@ const sortOptions = [
 ];
 
 export default function Bouquets() {
+
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [viewDetail, setViewDetail] = useState();
   
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPrice, setSelectedPrice] = useState('all');
@@ -178,8 +181,7 @@ export default function Bouquets() {
   }, [searchTimeout]);
 
   const handleQuickView = (product) => {
-    console.log('Быстрый просмотр:', product);
-    alert(`Быстрый просмотр: ${product.name}\nЦена: ${product.price} ₽`);
+    setViewDetail(product);
   };
 
   const getDisplayedProductsCount = () => {
@@ -412,6 +414,9 @@ export default function Bouquets() {
           </div>
         </section>
       </div>
+      { viewDetail && (
+        <DetailFlowerModal product={viewDetail} typeFlower="Букет" handleClose={() => setViewDetail(null)} />
+      ) }
     </div>
   );
 }
