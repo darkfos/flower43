@@ -1,3 +1,3 @@
 module.exports = {
-    apiUrl: 'http://localhost:5000/api'
+    apiUrl: 'https://flowers-site161.ru/api'
 }
