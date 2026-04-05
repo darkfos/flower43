@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-    baseURL: 'http://localhost:5000/api',
+    baseURL: 'https://flowers-site161.ru//api',
     timeout: 2800,
     headers: {
         Authorization: `Bearer ${localStorage.getItem('authToken')}`
