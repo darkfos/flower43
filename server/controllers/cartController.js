@@ -319,6 +319,12 @@ const updateCartsFromAdmin = async (req, res) => {
         paramsValues.push(cart.is_buy === '0' || cart.is_buy === 0 ? 0 : 1);
       }
 
+      const date = new Date();
+      const mysqlDatetime = date.toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
+
+      sets.push('updated_at = ?')
+      paramsValues.push(mysqlDatetime);
+
       if (sets.length === 0) continue;
 
       paramsValues.push(cart.id);
@@ -356,9 +362,12 @@ const buyProductFromCart = async (req, res) => {
     }
 
     const row = rows[0];
+    const date = new Date();
+    const mysqlDatetime = date.toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
+
     await connection.query(
-      `INSERT INTO orders (user_id, product_id, quantity, price, type_delivery, status, is_buy)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (user_id, product_id, quantity, price, type_delivery, status, is_buy, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         row.user_id,
         row.product_id,
@@ -366,7 +375,9 @@ const buyProductFromCart = async (req, res) => {
         price,
         type_delivery,
         cardStatuses.delivery,
-        1
+        1,
+        mysqlDatetime,
+        mysqlDatetime
       ]
     );
 
