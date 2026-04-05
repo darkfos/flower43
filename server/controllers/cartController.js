@@ -9,6 +9,7 @@ const addToCart = async (req, res) => {
     const { userId, productId, quantity = 1 } = req.body;
 
     console.log('🛒 Добавление в корзину:', { userId, productId, quantity });
+    console.log(userId, productId);
 
     if (!userId || !productId) {
       return res.status(400).json({

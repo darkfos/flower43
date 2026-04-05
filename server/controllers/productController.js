@@ -79,6 +79,7 @@ const getDetailProductData = async (slug = '') => {
 
     return { 
       product: {
+        id: product[0]?.id,
         name: product[0]?.name ?? '',
         slug: product[0].slug,
         price: product[0].price,
