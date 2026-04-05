@@ -76,30 +76,33 @@ const getDetailProductData = async (slug = '') => {
     `;
 
     const [product] = await pool.query(query, [slug]);
+    if (!product[0]) {
+      return null;
+    }
 
     return { 
       product: {
         id: product[0]?.id,
         name: product[0]?.name ?? '',
-        slug: product[0].slug,
-        price: product[0].price,
-        original_price: product[0].original_price,
-        description: product[0].description,
-        images: processImages(product[0].images),
-        type: product[0].type,
-        in_stock: product[0].in_stock,
-        is_customizable: product[0].is_customizable,
-        created_at: product[0].created_at,
-        tags: product[0].tags,
-        style: localeStyle(product[0].style),
-        size: localeStyle(product[0].size),
-        season: localeSeason(product[0].season),
-        weight: product[0].weight_grams,
-        height: product[0].height_cm,
-        stock_quantity: product[0].stock_quantity,
-        care_instructions: product[0].care_instructions,
-        sales_count: product[0].sales_count,
-        category_name: product[0].category_name
+        slug: product[0]?.slug,
+        price: product[0]?.price,
+        original_price: product[0]?.original_price,
+        description: product[0]?.description,
+        images: processImages(product[0]?.images),
+        type: product[0]?.type,
+        in_stock: product[0]?.in_stock,
+        is_customizable: product[0]?.is_customizable,
+        created_at: product[0]?.created_at,
+        tags: product[0]?.tags,
+        style: localeStyle(product[0]?.style),
+        size: localeStyle(product[0]?.size),
+        season: localeSeason(product[0]?.season),
+        weight: product[0]?.weight_grams,
+        height: product[0]?.height_cm,
+        stock_quantity: product[0]?.stock_quantity,
+        care_instructions: product[0]?.care_instructions,
+        sales_count: product[0]?.sales_count,
+        category_name: product[0]?.category_name
       },
       components: product.map(pr => ({
         quantity: pr.quantity_comp,
