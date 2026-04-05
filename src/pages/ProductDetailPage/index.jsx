@@ -33,6 +33,9 @@ const ProductDetailPage = memo(() => {
                 type
             }
         } = detailProductData;
+
+        console.log(detailProductData);
+        
         
         addToCart({
             id,
