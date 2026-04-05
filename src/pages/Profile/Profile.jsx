@@ -701,8 +701,8 @@ const PanelTab = memo(() => {
           items={[{ value: 'courier', label: 'Курьерская доставка'}, {value: 'pickup', label: 'Самовывоз'}]}
           onChangeValue={value => handleUpdateOrder({type_delivery: value}, order.id)}
         />,
-        order.created_at.split('T')[0], 
-        order.updated_at.split('T')[0], 
+        order.created_at, 
+        order.updated_at, 
         <Select 
           value={order.is_buy === 0 ? '0' : '1'}
           items={[{ value: '0', label: 'Нет'}, {value: '1', label: 'Да'}]}
@@ -722,7 +722,7 @@ const PanelTab = memo(() => {
 
   if (orders.length < 1) {
     return <Spinner />
-  }
+  } 
 
   return (
     <>
@@ -733,10 +733,12 @@ const PanelTab = memo(() => {
           body={constructionTableBody} 
         />
       </div>
-      <div className="panel-content__footer">
-        <TablePagination page={1} limit={5} total={orders.total ?? 5} handleChange={allOrders} />
-        <button onClick={handleSubmitUpdateOrders}>Сохранить</button>
-      </div>
+      { orders.data.length > 0 && (
+        <div className="panel-content__footer">
+          <TablePagination page={1} limit={5} total={orders.total ?? 5} handleChange={allOrders} />
+          <button onClick={handleSubmitUpdateOrders}>Сохранить</button>
+        </div>
+      ) }
     </>
   )
 });
