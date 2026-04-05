@@ -1,4 +1,7 @@
 const pool = require('../config/db');
+const { translateCardStatuses, cardStatuses } = require('../utils/cardStatuses');
+const { deliveryType, translateDeliveryType } = require("../utils/deliveryEnum");
+const { localeSeason, localeSize, localeStyle } = require('../utils/index');
 
 // Добавить товар в корзину
 const addToCart = async (req, res) => {
@@ -155,6 +158,7 @@ const getCart = async (req, res) => {
       SELECT 
         ci.product_id as id,
         ci.quantity,
+        ci.id as cart_id,
         p.name,
         p.price,
         p.description,
@@ -165,9 +169,9 @@ const getCart = async (req, res) => {
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE ci.user_id = ?
+      WHERE ci.user_id = ? AND ci.status = ? AND ci.is_buy = ?
       ORDER BY ci.created_at DESC
-    `, [userId]);
+    `, [userId, cardStatuses.process, false]);
 
     // Форматируем данные
     const formattedCart = cartItems.map(item => {
@@ -183,6 +187,7 @@ const getCart = async (req, res) => {
 
       return {
         id: item.id,
+        cart_id: item.cart_id,
         name: item.name,
         price: parseFloat(item.price) || 0,
         quantity: item.quantity,
@@ -214,6 +219,130 @@ const getCart = async (req, res) => {
     });
   }
 };
+
+const allCartsToAdmin = async (req, res) => {
+  try {
+    const responseCarts = [];
+    const { page = 1, limit = 5 } = req.query;
+
+    const [allCountCarts] = await pool.query('SELECT COUNT(id) as count FROM cart_items');
+
+    const [carts] = await pool.query(`
+      SELECT
+        ci.id AS id,
+        ci.quantity,
+        ci.created_at,
+        ci.updated_at,
+        ci.is_buy,
+        ci.status,
+        ci.type_delivery,
+        ci.price,
+        CONCAT(u.first_name, ' ', u.last_name) as user_name,
+        u.phone,
+        p.id as product_id,
+        p.name AS product_name,
+        p.description AS product_description,
+        p.season,
+        p.style,
+        p.size,
+        p.type,
+        p.tags
+      FROM cart_items AS ci
+      LEFT JOIN users AS u ON u.id_user = ci.user_id
+      LEFT JOIN products AS p ON p.id = ci.product_id 
+      LIMIT ? OFFSET ?
+    `, [Number(limit), Number((+page - 1) * +limit)]);
+
+    // Связка записей
+    carts.forEach(cart => {
+      const includedCart = responseCarts.findIndex(inCart => inCart.id == cart.id);
+      if (includedCart === -1) {
+        responseCarts.push(
+          {
+            id: cart.id,
+            quantity: cart.quantity,
+            created_at: cart.created_at,
+            updated_at: cart.updated_at,
+            is_buy: cart.is_buy,
+            status: translateCardStatuses[cart.status],
+            status_base: cart.status,
+            type_delivery: translateDeliveryType[cart.type_delivery],
+            price: cart.price,
+            username: cart.user_name,
+            product: 
+              {
+                id: cart.product_id,
+                name: cart.product_name,
+                description: cart.product_description,
+                season: localeSeason(cart.season),
+                style: localeStyle(cart.style),
+                size: localeSize(cart.size),
+                type: cart.type,
+                tags: cart.tags ?? []
+              }
+          }
+        )
+      }
+    })
+
+    return res.status(200).json({ data: responseCarts, page, limit, total: allCountCarts[0].count });
+  } catch (e) {
+    console.log(e)
+    return res.status(400).json({ data: [] });
+  }
+}
+
+const updateCartsFromAdmin = async (req, res) => {
+  try {
+
+    const data = req.body;
+
+    data.forEach(async cart => {
+      const paramsValues = [];
+
+      if (cart.status) {
+        paramsValues.push(cart.status)
+      }
+
+      if (cart.type_delivery) {
+        paramsValues.push(cart.type_delivery)
+      }
+
+      if (cart.is_buy) {
+        paramsValues.push(cart.is_buy)
+      }
+
+      paramsValues.push(cart.id);
+
+      await pool.query(`UPDATE cart_items SET ${cart.status ? 'status = ?' : ''} ${cart.type_delivery ? `${cart.status ? ', ': ''}type_delivery = ?`: ''} ${cart.is_buy ? `${(cart.status || cart.type_delivery) ? ', ' : ''} is_buy = ?` : ''} WHERE id = ?`, paramsValues);
+    });
+
+    return res.status(200).json({ updated: true });
+  } catch {
+    return res.status(400).json({ updated: false })
+  }
+}
+
+const buyProductFromCart = async (req, res) => {
+  try {
+    
+    const { cartId } = req.params;
+    const { type_delivery, price } = req.query;
+
+    await pool.query(`
+        UPDATE cart_items
+        SET
+          status = ?,
+          type_delivery = ?,
+          price = ?
+        WHERE id = ?
+    `, [cardStatuses.delivery, type_delivery, price, cartId]);
+
+    return res.json({ message: 'success'});
+  } catch {
+    return res.json({ message: 'error' });
+  }
+}
 
 // Очистить корзину
 const clearCart = async (req, res) => {
@@ -254,5 +383,8 @@ module.exports = {
   updateQuantity,
   removeFromCart,
   getCart,
-  clearCart
+  clearCart,
+  allCartsToAdmin,
+  buyProductFromCart,
+  updateCartsFromAdmin
 };

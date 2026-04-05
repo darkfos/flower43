@@ -301,42 +301,7 @@
   position: relative;
 }
 
-.social-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 18px;
-}
 
-.social-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px;
-  border: 2px solid #E8E6E1;
-  border-radius: 10px;
-  background: white;
-  color: #2D5016;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-}
-
-.social-btn:hover {
-  border-color: #8BC9A1;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-}
-
-.google-btn:hover {
-  border-color: #4285F4;
-}
-
-.yandex-btn:hover {
-  border-color: #FC3F1D;
-}
 
 .auth-switch {
   text-align: center;

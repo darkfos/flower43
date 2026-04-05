@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: ['http://159.194.211.62', 'http://159.194.211.62:3000', 'http://159.194.211.62:80', 'https://flowers-site161.ru'],
+    origin: ['http://159.194.211.62', 'http://159.194.211.62:3000', 'http://159.194.211.62:80', 'https://flowers-site161.ru', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE', 'HEAD', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true

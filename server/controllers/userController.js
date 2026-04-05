@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 // Генерация JWT токена
-const generateToken = (userId, email) => {
+const generateToken = (userId, email, role) => {
     return jwt.sign(
-        { userId, email },
+        { userId, email, role },
         process.env.JWT_SECRET || 'your-secret-key',
         { expiresIn: '30d' }
     );
@@ -56,7 +56,7 @@ exports.register = async (req, res) => {
         );
 
         // Генерация токена
-        const token = generateToken(result.insertId, email);
+        const token = generateToken(result.insertId, email, 'user');
 
         res.status(201).json({
             success: true,
@@ -125,7 +125,7 @@ exports.login = async (req, res) => {
         );
 
         // Генерация токена
-        const token = generateToken(user.id_user, user.email);
+        const token = generateToken(user.id_user, user.email, user.role);
 
         res.json({
             success: true,
