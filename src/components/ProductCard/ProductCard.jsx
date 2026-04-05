@@ -92,10 +92,10 @@ const ProductCard = ({ product, onQuickView }) => {
             setLoading(false);
           };
           
-          testImage.onerror = () => {
-            console.log('🔄 Прямое подключение не удалось, используем прокси:', firstImage);
-            setImageUrl(`http://localhost:5000/api/images/proxy?url=${encodeURIComponent(firstImage)}`);
-          };
+          // testImage.onerror = () => {
+          //   console.log('🔄 Прямое подключение не удалось, используем прокси:', firstImage);
+          //   setImageUrl(`http://localhost:5000/api/images/proxy?url=${encodeURIComponent(firstImage)}`);
+          // };
           
           testImage.src = firstImage;
           return;
