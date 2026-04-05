@@ -170,9 +170,9 @@ const getCart = async (req, res) => {
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE ci.user_id = ? AND ci.status = ? AND ci.is_buy = ?
+      WHERE ci.user_id = ?
       ORDER BY ci.created_at DESC
-    `, [userId, cardStatuses.process, false]);
+    `, [userId]);
 
     // Форматируем данные
     const formattedCart = cartItems.map(item => {
@@ -226,18 +226,18 @@ const allCartsToAdmin = async (req, res) => {
     const responseCarts = [];
     const { page = 1, limit = 5 } = req.query;
 
-    const [allCountCarts] = await pool.query('SELECT COUNT(id) as count FROM cart_items');
+    const [allCountCarts] = await pool.query('SELECT COUNT(id) as count FROM orders');
 
     const [carts] = await pool.query(`
       SELECT
-        ci.id AS id,
-        ci.quantity,
-        ci.created_at,
-        ci.updated_at,
-        ci.is_buy,
-        ci.status,
-        ci.type_delivery,
-        ci.price,
+        o.id AS id,
+        o.quantity,
+        o.created_at,
+        o.updated_at,
+        o.is_buy,
+        o.status,
+        o.type_delivery,
+        o.price,
         CONCAT(u.first_name, ' ', u.last_name) as user_name,
         u.phone,
         p.id as product_id,
@@ -248,9 +248,9 @@ const allCartsToAdmin = async (req, res) => {
         p.size,
         p.type,
         p.tags
-      FROM cart_items AS ci
-      LEFT JOIN users AS u ON u.id_user = ci.user_id
-      LEFT JOIN products AS p ON p.id = ci.product_id 
+      FROM orders AS o
+      LEFT JOIN users AS u ON u.id_user = o.user_id
+      LEFT JOIN products AS p ON p.id = o.product_id 
       LIMIT ? OFFSET ?
     `, [Number(limit), Number((+page - 1) * +limit)]);
 
@@ -295,55 +295,92 @@ const allCartsToAdmin = async (req, res) => {
 
 const updateCartsFromAdmin = async (req, res) => {
   try {
-
     const data = req.body;
+    if (!Array.isArray(data)) {
+      return res.status(400).json({ updated: false });
+    }
 
-    data.forEach(async cart => {
+    for (const cart of data) {
+      if (cart.id == null) continue;
+
+      const sets = [];
       const paramsValues = [];
 
-      if (cart.status) {
-        paramsValues.push(cart.status)
+      if (cart.status != null && cart.status !== '') {
+        sets.push('status = ?');
+        paramsValues.push(cart.status);
+      }
+      if (cart.type_delivery != null && cart.type_delivery !== '') {
+        sets.push('type_delivery = ?');
+        paramsValues.push(cart.type_delivery);
+      }
+      if (cart.is_buy !== undefined && cart.is_buy !== null && cart.is_buy !== '') {
+        sets.push('is_buy = ?');
+        paramsValues.push(cart.is_buy === '0' || cart.is_buy === 0 ? 0 : 1);
       }
 
-      if (cart.type_delivery) {
-        paramsValues.push(cart.type_delivery)
-      }
-
-      if (cart.is_buy) {
-        paramsValues.push(cart.is_buy)
-      }
+      if (sets.length === 0) continue;
 
       paramsValues.push(cart.id);
-
-      await pool.query(`UPDATE cart_items SET ${cart.status ? 'status = ?' : ''} ${cart.type_delivery ? `${cart.status ? ', ': ''}type_delivery = ?`: ''} ${cart.is_buy ? `${(cart.status || cart.type_delivery) ? ', ' : ''} is_buy = ?` : ''} WHERE id = ?`, paramsValues);
-    });
+      await pool.query(`UPDATE orders SET ${sets.join(', ')} WHERE id = ?`, paramsValues);
+    }
 
     return res.status(200).json({ updated: true });
-  } catch {
-    return res.status(400).json({ updated: false })
+  } catch (e) {
+    console.error(e);
+    return res.status(400).json({ updated: false });
   }
-}
+};
 
 const buyProductFromCart = async (req, res) => {
-  try {
-    
-    const { cartId } = req.params;
-    const { type_delivery, price } = req.query;
+  const { cartId } = req.params;
+  const { type_delivery, price } = req.query;
+  const userId = req.user?.userId;
 
-    await pool.query(`
-        UPDATE cart_items
-        SET
-          status = ?,
-          type_delivery = ?,
-          price = ?
-        WHERE id = ?
-    `, [cardStatuses.delivery, type_delivery, price, cartId]);
-
-    return res.json({ message: 'success'});
-  } catch {
-    return res.json({ message: 'error' });
+  if (!userId) {
+    return res.status(401).json({ message: 'error', success: false });
   }
-}
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [rows] = await connection.query(
+      'SELECT id, user_id, product_id, quantity FROM cart_items WHERE id = ? AND user_id = ?',
+      [cartId, userId]
+    );
+
+    if (rows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ message: 'not found', success: false });
+    }
+
+    const row = rows[0];
+    await connection.query(
+      `INSERT INTO orders (user_id, product_id, quantity, price, type_delivery, status, is_buy)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        row.user_id,
+        row.product_id,
+        row.quantity,
+        price,
+        type_delivery,
+        cardStatuses.delivery,
+        1
+      ]
+    );
+
+    await connection.query('DELETE FROM cart_items WHERE id = ?', [cartId]);
+    await connection.commit();
+    return res.json({ message: 'success' });
+  } catch (e) {
+    await connection.rollback();
+    console.error('buyProductFromCart:', e);
+    return res.status(500).json({ message: 'error' });
+  } finally {
+    connection.release();
+  }
+};
 
 // Очистить корзину
 const clearCart = async (req, res) => {
