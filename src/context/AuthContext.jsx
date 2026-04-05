@@ -1,6 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 
-import { apiUrl } from "../utils/apiConfig"
+import { api } from "../utils/apiConfig"
 
 const AuthContext = createContext();
 
@@ -18,8 +18,6 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState(null);
 
-  const API_URL = `${apiUrl}/auth`;
-
   useEffect(() => {
     checkAuth();
   }, []);
@@ -30,14 +28,14 @@ export const AuthProvider = ({ children }) => {
       if (savedToken) {
         setToken(savedToken);
         
-        const response = await fetch(`${API_URL}/me`, {
+        const response = await api.get(`/auth/me`, {
           headers: {
             'Authorization': `Bearer ${savedToken}`
           }
         });
 
-        if (response.ok) {
-          const data = await response.json();
+        if (response.status < 400) {
+          const data = await response.data;
           setUser(data.user);
           setIsLoggedIn(true);
         } else {
@@ -55,15 +53,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
+      const response = await api.post(`/auth/login`, JSON.stringify({ email, password }), {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+          "Content-Type": 'application/json'
+        }
       });
 
-      const data = await response.json();
+      const data = await response.data;
 
       if (data.success) {
         localStorage.setItem('authToken', data.token);
@@ -82,15 +78,13 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch(`${API_URL}/register`, {
-        method: 'POST',
+      const response = await api.post(`/auth/register`, JSON.stringify(userData), {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
+      const data = await response.data;
 
       if (data.success) {
         localStorage.setItem('authToken', data.token);

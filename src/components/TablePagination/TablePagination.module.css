@@ -1,0 +1,29 @@
+.table-pagination {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.table-pagination__page {
+    padding: 6px 12px;
+    border-radius: 2px;
+    user-select: none;
+    cursor: pointer;
+    background-color: #8BC9A1;
+}
+
+.table-pagination__limit select {
+    height: 100%;
+    background-color: #7e817f;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.table-pagination__page:hover {
+    background-color: #58b177;
+    box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
+}

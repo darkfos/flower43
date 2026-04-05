@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DetailFlowerModal } from '../../components/DetailFlowerModal';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import './Compositions.css';
-import { apiUrl } from '../../utils/apiConfig';
+import { api } from '../../utils/apiConfig';
 
 const categories = [
   { id: 'all', name: 'Все композиции', dbField: null },
@@ -75,13 +75,13 @@ export default function Compositions() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${apiUrl}/products/compositions`);
+        const response = await api.get(`/products/compositions`);
         
-        if (!response.ok) {
+        if (!response.status > 300) {
           throw new Error(`Ошибка сервера: ${response.status}`);
         }
         
-        const result = await response.json();
+        const result = await response.data;
         
         if (result.success) {
           const compositions = result.data.map(product => ({

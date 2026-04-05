@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { DetailFlowerModal } from '../DetailFlowerModal';
 import ProductCard from '../ProductCard/ProductCard';
 import './BouquetShowcase.css';
-import { apiUrl } from '../../utils/apiConfig';
+import { api } from '../../utils/apiConfig';
 
 const BouquetShowcase = () => {
 
@@ -22,13 +22,13 @@ const BouquetShowcase = () => {
       setError(null);
       console.log('🔄 Загружаем товары из БД...');
       
-      const response = await fetch(`${apiUrl}/products/featured`);
+      const response = await api.get(`/products/featured`);
       
-      if (!response.ok) {
+      if (!response.status > 300) {
         throw new Error(`Ошибка сервера: ${response.status}`);
       }
       
-      const result = await response.json();
+      const result = await response.data;
       console.log('📦 Ответ от сервера:', result);
       
       if (result.success && result.data && result.data.length > 0) {

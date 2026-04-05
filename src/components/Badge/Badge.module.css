@@ -1,0 +1,11 @@
+.badge {
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    user-select: none;
+}
+
+.badge:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}

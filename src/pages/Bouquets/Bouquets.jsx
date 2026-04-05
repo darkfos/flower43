@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import './Bouquets.css';
 import { DetailFlowerModal } from '../../components/DetailFlowerModal';
-import { apiUrl } from '../../utils/apiConfig';
+import { api } from '../../utils/apiConfig';
 
 const categories = [
   { id: 'all', name: 'Все букеты', dbField: null },
@@ -72,13 +72,13 @@ export default function Bouquets() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${apiUrl}/products/all`);
+        const response = await api.get(`/products/all`);
         
-        if (!response.ok) {
+        if (!response.status > 300) {
           throw new Error(`Ошибка сервера: ${response.status}`);
         }
         
-        const result = await response.json();
+        const result = await response.data;
         
         if (result.success) {
           const bouquetsOnly = result.data.filter(product => 

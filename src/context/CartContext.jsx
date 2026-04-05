@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiUrl } from "../utils/apiConfig";
+import { createContext, useContext, useState, useEffect } from 'react';
+import { api } from "../utils/apiConfig";
 
 const CartContext = createContext();
 
@@ -31,13 +31,13 @@ export const CartProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`🔄 Загрузка корзины для пользователя ${userId}...`);
-      const response = await fetch(`${apiUrl}/cart/user/${userId}`);
+      const response = await api.get(`/cart/user/${userId}`);
       
-      if (!response.ok) {
+      if (!response.status > 300) {
         throw new Error(`Ошибка сервера: ${response.status}`);
       }
       
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         setCartItems(result.data || []);
@@ -124,19 +124,17 @@ export const CartProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`➕ Добавление товара ${product.id} в корзину...`);
-      const response = await fetch(`${apiUrl}/cart/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await api.post(`/cart/add`, JSON.stringify({
           userId: userId,
           productId: product.id,
           quantity: quantity
-        })
+        }), {
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         await loadCart();
@@ -186,19 +184,18 @@ export const CartProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`📊 Обновление количества товара ${productId} до ${quantity}...`);
-      const response = await fetch(`${apiUrl}/cart/update`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await api.post(`/cart/update`, JSON.stringify({
           userId: userId,
           productId: productId,
           quantity: quantity
-        })
+        }),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         await loadCart();
@@ -233,18 +230,17 @@ export const CartProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`➖ Удаление товара ${productId} из корзины...`);
-      const response = await fetch(`${apiUrl}/cart/remove`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await api.post(`/cart/remove`, JSON.stringify({
           userId: userId,
           productId: productId
-        })
+        }),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         await loadCart();
@@ -273,17 +269,16 @@ export const CartProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`🗑️ Очистка корзины...`);
-      const response = await fetch(`${apiUrl}/cart/clear`, {
-        method: 'POST',
+      const response = await api.post(`/cart/clear`, JSON.stringify({
+          userId: userId
+        }),
+      {
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId
-        })
+        }
       });
 
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         setCartItems([]);
@@ -300,6 +295,13 @@ export const CartProvider = ({ children, userId }) => {
       setLoading(false);
     }
   };
+
+  const buyCart = async (cartId, typeDelivery, price) => {
+      const params = new URLSearchParams({ type_delivery: typeDelivery, price: price });
+      const req = await api.post(`/cart/buy/${cartId}?${params.toString()}`, {
+      });
+      console.log(await req.data);
+  }
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -347,6 +349,7 @@ export const CartProvider = ({ children, userId }) => {
     getItemQuantity,
     refreshCart,
     clearError,
+    buyCart,
     
     userId
   };

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import './Cart.css';
 
 export default function Cart() {
-  const { cartItems, updateQuantity, removeFromCart, calculateSubtotal, clearCart } = useCart();
+
+  const { cartItems, updateQuantity, removeFromCart, calculateSubtotal, buyCart } = useCart();
   const [deliveryMethod, setDeliveryMethod] = useState('courier');
+  const [buyingIds, setBuyingIds] = useState([]) ;
 
   const calculateDelivery = () => {
     if (deliveryMethod === 'pickup') return 0;
@@ -18,9 +20,24 @@ export default function Cart() {
   };
 
   const handleCheckout = () => {
-    alert('Заказ оформлен!');
-    clearCart();
+    buyingIds.forEach(cartId => {
+      const cart = cartItems.find(cart => cart.cart_id == cartId);
+
+      buyCart(
+        cartId,
+        deliveryMethod,
+        cart?.price  
+      );
+    })
   };
+
+  const handleCheckToBuy = useCallback((e, cartId) => {
+    if (e.target.checked) {
+      setBuyingIds(state => [...state, cartId]);
+    } else {
+      setBuyingIds(state => state.filter(prevCartId => prevCartId !== cartId));
+    }
+  }, [setBuyingIds]);
 
   if (cartItems.length === 0) {
     return (
@@ -57,6 +74,9 @@ export default function Cart() {
 
             {cartItems.map(item => (
               <div key={item.id} className="cart-item">
+                <div className='item-checkbox'>
+                    <input type='checkbox' onChange={e => handleCheckToBuy(e, item.cart_id)} />
+                </div>
                 <div className="item-image">
                   <img src={item.image} alt={item.name} />
                 </div>

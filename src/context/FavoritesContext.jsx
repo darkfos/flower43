@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiUrl } from '../utils/apiConfig';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { apiUrl, api } from '../utils/apiConfig';
 
 const FavoritesContext = createContext();
 
@@ -28,13 +28,13 @@ export const FavoritesProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`🔄 Загрузка избранного для пользователя ${userId}...`);
-      const response = await fetch(`${apiUrl}/favorites/user/${userId}`);
+      const response = await api.get(`/favorites/user/${userId}`);
       
-      if (!response.ok) {
+      if (!response.status > 300) {
         throw new Error(`Ошибка сервера: ${response.status}`);
       }
       
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         setFavorites(result.data);
@@ -69,18 +69,16 @@ export const FavoritesProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`➕ Добавление товара ${product.id} в избранное...`);
-      const response = await fetch(`${apiUrl}/favorites/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await api.post(`/favorites/add`, JSON.stringify({
           userId: userId,
           productId: product.id
-        })
+        }), {
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         setFavorites(prev => {
@@ -121,18 +119,16 @@ export const FavoritesProvider = ({ children, userId }) => {
       setError(null);
       
       console.log(`➖ Удаление товара ${productId} из избранного...`);
-      const response = await fetch(`${apiUrl}/favorites/remove`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await api.post(`/favorites/remove`, JSON.stringify({
           userId: userId,
           productId: productId
-        })
+        }), {
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
 
-      const result = await response.json();
+      const result = await response.data;
       
       if (result.success) {
         setFavorites(prev => prev.filter(item => item.id !== productId));
@@ -181,15 +177,13 @@ export const FavoritesProvider = ({ children, userId }) => {
       
       // Удаляем все товары по одному
       const deletePromises = favorites.map(item => 
-        fetch(`${apiUrl}/favorites/remove`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        api.post(`/favorites/remove`, JSON.stringify({
             userId: userId,
             productId: item.id
-          })
+          }), {
+          headers: {
+            'Content-Type': 'application/json',
+          }
         })
       );
       

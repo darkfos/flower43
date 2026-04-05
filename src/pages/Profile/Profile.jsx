@@ -1,10 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useFavorites } from '../../context/FavoritesContext';
-import './Profile.css';
-import { apiUrl } from '../../utils/apiConfig';
+import { api } from '../../utils/apiConfig';
+import { Table } from '../../components/Table';
+import { TablePagination } from '../../components/TablePagination';
+import { Spinner } from '../../components/Spinner';
+import { Badge } from '../../components/Badge';
+import { Select } from '../../components/Select';
 
+import './Profile.css';
 
 const Icons = {
   user: '👤',
@@ -59,7 +64,7 @@ export default function Profile() {
     newPassword: '',
     confirmPassword: ''
   });
-  
+
   const navigate = useNavigate();
   const { user, logout, isLoggedIn, updateUser } = useAuth();
   const { favorites, getFavoritesCount, removeFromFavorites } = useFavorites();
@@ -140,8 +145,7 @@ export default function Profile() {
       
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       
-      const response = await fetch(`${apiUrl}/orders/user`, {
-        method: 'GET',
+      const response = await api.get(`/orders/user`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
@@ -149,8 +153,8 @@ export default function Profile() {
         credentials: 'include'
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status < 400) {
+        const data = await response.data;
         
         if (data.success) {
           setOrders(data.orders || data.data || []);
@@ -177,18 +181,15 @@ export default function Profile() {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       
-      const response = await fetch(`${apiUrl}/auth/update`, {
-        method: 'PUT',
+      const response = await api.put(`/auth/update`, JSON.stringify(editForm), {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
-        },
-        credentials: 'include',
-        body: JSON.stringify(editForm)
+        }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status < 400) {
+        const data = await response.data;
         if (data.success) {
           const updatedUser = { ...userData, ...editForm };
           setUserData(updatedUser);
@@ -211,21 +212,18 @@ export default function Profile() {
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken');
       
-      const response = await fetch(`${apiUrl}/auth/change-password`, {
-        method: 'POST',
+      const response = await api.post(`/auth/change-password`, JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        }), {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword
-        })
+        }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.status < 400) {
+        const data = await response.data;
         if (data.success) {
           setPasswordForm({
             currentPassword: '',
@@ -312,6 +310,15 @@ export default function Profile() {
                 <span className="nav-count">{favorites.length}</span>
               )}
             </button>
+
+            { userData?.role == 'admin' && (
+              <button 
+                className={`nav-item ${activeTab === 'panel' ? 'active' : ''}`}
+                onClick={() => setActiveTab('panel')}
+              >
+                <span>Панель заказов</span>
+              </button>
+            ) }
           </nav>
           
           <div className="sidebar-footer">
@@ -485,6 +492,10 @@ export default function Profile() {
               removeFromFavorites={removeFromFavorites}
             />
           )}
+
+          { activeTab === 'panel' && (
+            <PanelTab />
+          ) }
         </div>
       </div>
     </div>
@@ -633,3 +644,99 @@ const FavoritesTab = ({ favorites, removeFromFavorites }) => {
     </div>
   );
 };
+
+const PanelTab = memo(() => {
+
+  const [orders, setOrders] = useState([]);
+  const [updatedOrders, setUpdatedOrders] = useState([]);
+
+  const allOrders = async (page, limit) => {
+    const params = new URLSearchParams({
+      page, 
+      limit
+    });
+
+    try {
+      const req = await api.get(`/cart/all?${params}`);
+      setOrders(await req.data);
+    } catch {
+
+    }
+  }
+
+  const handleUpdateOrder = useCallback((values, orderId) => {
+    setUpdatedOrders(prev => {
+      const order =
+        prev.find(order => order.id === orderId) ??
+        { id: orderId };
+
+      const nextOrder = { ...order, ...values };
+
+      const withoutCurrent = prev.filter(order => order.id !== orderId);
+
+      return [...withoutCurrent, nextOrder];
+    });
+  }, [setUpdatedOrders]);
+
+  const handleSubmitUpdateOrders = async () => {
+    await api.put('/cart/update', updatedOrders);
+  }
+
+  useEffect(() => {
+    allOrders(1, 5);
+  }, []);
+
+  const constructionTableBody = useMemo(() => {
+    return orders?.data?.map(order => {
+      return [
+        order.username, 
+        order.quantity, 
+        <Select 
+          value={order.status_base}
+          items={[{ value: 'process', label: 'В процессе покупки'}, {value: 'delivery', label: 'В доставке'}, {value: 'cancelled', label: 'Отменен'}, {value: 'delivered', label: 'Доставлен'}]}
+          onChangeValue={value => handleUpdateOrder({ status: value}, order.id)}
+        />,
+        <Select 
+          value={order.type_delivery === 'Курьерская доставка' ? 'courier' : 'pickup'}
+          items={[{ value: 'courier', label: 'Курьерская доставка'}, {value: 'pickup', label: 'Самовывоз'}]}
+          onChangeValue={value => handleUpdateOrder({type_delivery: value}, order.id)}
+        />,
+        order.created_at.split('T')[0], 
+        order.updated_at.split('T')[0], 
+        <Select 
+          value={order.is_buy === 0 ? '0' : '1'}
+          items={[{ value: '0', label: 'Нет'}, {value: '1', label: 'Да'}]}
+          onChangeValue={value => handleUpdateOrder({ is_buy: value}, order.id)}
+        />,
+        order.price ?? 'Не указана', 
+        order.product.name, 
+        order.product.description, 
+        <Badge text={order.product.season} type={order.product.season} />,
+        <Badge text={order.product.style} type={order.product.style} />, 
+        order.product.size, 
+        <Badge text={order.product.type} type={order.product.type} />, 
+        order.product.tags.join(', ')
+      ]
+    })
+  }, [orders]);
+
+  if (orders.length < 1) {
+    return <Spinner />
+  }
+
+  return (
+    <>
+      <div className="panel-content">
+        <h1>Заказы пользователей</h1>
+        <Table 
+          headers={['Пользователь', 'Количество', 'Статус', 'Тип доставки', 'Создано', 'Обновлено', 'Куплен', 'Цена', 'Товар', 'Описание товара', 'Сезон', 'Стиль', 'Размер', 'Тип', 'Теги']} 
+          body={constructionTableBody} 
+        />
+      </div>
+      <div className="panel-content__footer">
+        <TablePagination page={1} limit={5} total={orders.total ?? 5} handleChange={allOrders} />
+        <button onClick={handleSubmitUpdateOrders}>Сохранить</button>
+      </div>
+    </>
+  )
+});
