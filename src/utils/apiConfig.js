@@ -16,7 +16,7 @@ api.interceptors.request.use(
                 config.headers.Authorization = `Bearer ${token}`;
             };
             
-            await fetch('http://localhost:5000/api/auth/me', {
+            await fetch('https://flowers-site161.ru/api/auth/me', {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
