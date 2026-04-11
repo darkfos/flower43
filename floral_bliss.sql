@@ -21,9 +21,6 @@ SET @@SESSION.SQL_LOG_BIN= 0;
 -- GTID state at the beginning of the backup 
 --
 
-SET @@GLOBAL.GTID_PURGED=/*!80000 '+'*/ '5bc121f6-35ce-11f1-a944-6278a9f2185f:1-95,
-c61a2350-2ad7-11f1-b30d-aa8290cc1502:1-144';
-
 --
 -- Table structure for table `bouquet_components`
 --
