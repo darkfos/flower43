@@ -16,6 +16,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
 }));
+
+// Media static files
+app.use('/static', express.static('media'));
 app.use(express.json());
 app.use('/api/images', require('./routes/imageRoutes'));
 app.use((req, res, next) => {
