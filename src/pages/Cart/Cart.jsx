@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { api } from '../../utils/apiConfig';
 import './Cart.css';
 
 export default function Cart() {
@@ -78,7 +79,7 @@ export default function Cart() {
                     <input type='checkbox' onChange={e => handleCheckToBuy(e, item.cart_id)} />
                 </div>
                 <div className="item-image">
-                  <img src={item.image} alt={item.name} />
+                  <img src={`${api.defaults.baseURL}/static/${item.image}`} alt={item.name} />
                 </div>
                 
                 <div className="item-details">

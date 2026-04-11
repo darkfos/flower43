@@ -1,7 +1,7 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useCart } from '../../context/CartContext';
+import { api } from "../../utils/apiConfig";
 import './Favorites.css';
 
 export default function Favorites() {
@@ -18,8 +18,8 @@ export default function Favorites() {
 
   // Функция для безопасного получения изображения
   const getImage = (item) => {
-    if (item.image) return item.image;
-    if (item.images && Array.isArray(item.images)) return item.images[0];
+    if (item.image) return `${api.defaults.baseURL}/static/${item.image}`;
+    if (item.images && Array.isArray(item.images)) return `${api.defaults.baseURL}/static/${item.images?.[0]}`;
     if (item.images && typeof item.images === 'string') {
       try {
         const parsed = JSON.parse(item.images);

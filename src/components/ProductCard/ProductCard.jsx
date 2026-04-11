@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useCart } from '../../context/CartContext';
 import { useFavorites } from '../../context/FavoritesContext';
 import { normalizePrice } from '../../utils/normalizePrice';
 import './ProductCard.css';
+import { api } from "../../utils/apiConfig";
 
 const ProductCard = ({ product, onQuickView }) => {
   const { addToCart } = useCart();
@@ -28,85 +29,19 @@ const ProductCard = ({ product, onQuickView }) => {
     type
   } = product;
 
-  const getFirstImage = () => {
-    if (!images) return null;
-    
-    try {
-      let imageArray = [];
-      
-      if (Array.isArray(images)) {
-        imageArray = images;
-      } 
-      else if (typeof images === 'string') {
-        try {
-          const parsed = JSON.parse(images);
-          if (Array.isArray(parsed)) {
-            imageArray = parsed;
-          } else {
-            imageArray = [parsed];
-          }
-        } catch (e) {
-          if (images.trim() !== '') {
-            imageArray = [images];
-          }
-        }
-      }
-      
-      return imageArray.find(img => img && img.trim() !== '') || null;
-    } catch (error) {
-      console.error('Ошибка парсинга изображений:', error);
-      return null;
-    }
-  };
-
   useEffect(() => {
     const loadImage = async () => {
       try {
         setLoading(true);
         setImageError(false);
         
-        const firstImage = getFirstImage();
-        
-        if (!firstImage) {
-          setImageUrl(`https://images.unsplash.com/photo-1562690868-60bbe7293e94?w=400&h=600&fit=crop&auto=format&text=${encodeURIComponent(name)}`);
-          setImageLoaded(true);
-          setLoading(false);
-          return;
-        }
-
-        console.log('🖼️ Загрузка изображения для:', name, firstImage);
+        const firstImage = images[0];
         
         if (firstImage.includes('unsplash.com')) {
           setImageUrl(firstImage);
           return;
         }
-        
-        if (firstImage.startsWith('http')) {
-          const testImage = new Image();
-          testImage.crossOrigin = 'anonymous';
-          
-          testImage.onload = () => {
-            console.log('✅ Прямое подключение удалось:', firstImage);
-            setImageUrl(firstImage);
-            setImageLoaded(true);
-            setLoading(false);
-          };
-          
-          // testImage.onerror = () => {
-          //   console.log('🔄 Прямое подключение не удалось, используем прокси:', firstImage);
-          //   setImageUrl(`http://localhost:5000/api/images/proxy?url=${encodeURIComponent(firstImage)}`);
-          // };
-          
-          testImage.src = firstImage;
-          return;
-        }
-        
-        if (firstImage.startsWith('/')) {
-          setImageUrl(firstImage);
-          return;
-        }
-        
-        setImageUrl(`https://images.unsplash.com/photo-1562690868-60bbe7293e94?w=400&h=600&fit=crop&auto=format&text=${encodeURIComponent(name)}`);
+        setImageUrl(`${api.defaults.baseURL}/static/${firstImage}`);
         
       } catch (error) {
         console.error('Ошибка загрузки изображения:', error);
@@ -142,7 +77,7 @@ const ProductCard = ({ product, onQuickView }) => {
       id,
       name,
       price: normalizePrice(price),
-      image: imageUrl,
+      image: `${api.defaults.baseURL}/static/${imageUrl}`,
       description,
       category: category?.name || category,
       type
@@ -182,6 +117,9 @@ const ProductCard = ({ product, onQuickView }) => {
       default: return 'букет';
     }
   };
+
+        
+  console.log(imageUrl, 3939);
 
   return (
     <div className={`product-card ${!in_stock ? 'out-of-stock' : ''}`}>

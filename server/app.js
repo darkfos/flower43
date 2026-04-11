@@ -11,14 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-    origin: ['http://159.194.211.62', 'http://159.194.211.62:3000', 'http://159.194.211.62:80', 'https://flowers-site161.ru', 'http://localhost:3000'],
+    origin: ['http://159.194.211.62', 'http://159.194.211.62:3000', 'http://159.194.211.62:80', 'https://flowers-site161.ru', 'http://localhost:3000', 'http://localhost:3002'],
     methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE', 'HEAD', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
 }));
 
 // Media static files
-app.use('/static', express.static('media'));
+app.use('/api/static', express.static('media'));
 app.use(express.json());
 app.use('/api/images', require('./routes/imageRoutes'));
 app.use((req, res, next) => {

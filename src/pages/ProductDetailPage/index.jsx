@@ -59,7 +59,7 @@ const ProductDetailPage = memo(() => {
                 const data = await req.data;
 
                 if (req.status === 200) {
-                    setActiveImage(data.product.images[0]);
+                    setActiveImage(`${api.defaults.baseURL}/static/${data.product.images[0]}`);
                     setDetailProductData(data);
                 } else {
                     setProductNotFound(true);
@@ -101,8 +101,8 @@ const ProductDetailPage = memo(() => {
                             {product.images.map((image, idx) => (
                                 <img 
                                     key={idx}
-                                    src={image} 
-                                    onClick={() => setActiveImage(image)}
+                                    src={`${api.defaults.baseURL}/static/${image}`} 
+                                    onClick={() => setActiveImage(`${api.defaults.baseURL}/static/${image}`)}
                                     className={activeImage === image ? styles.activeThumb : ''}
                                     alt={`${product.name} вид ${idx + 1}`}
                                 />

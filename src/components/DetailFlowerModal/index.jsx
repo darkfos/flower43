@@ -6,6 +6,7 @@ import { normalizePrice } from "../../utils/normalizePrice";
 import styles from "./DetailFlower.module.css";
 import CloseIcon from "../../public/images/products/close.svg";
 import ProductImage404 from "../../public/images/products/product_404.jpeg";
+import { api } from "../../utils/apiConfig";
 
 export const DetailFlowerModal = memo(({ typeFlower, product, handleClose }) => {
     
@@ -56,10 +57,10 @@ export const DetailFlowerModal = memo(({ typeFlower, product, handleClose }) => 
                 <div className={styles.__images}>
                     <div className={styles.__list_images}>
                         { product.images.map(image => (
-                            <img src={errorImage.includes(image) ? ProductImage404 : image} alt={product.name} aria-label={product.name} onClick={() => setActiveImage(image)} onError={() => setErrorImage(state => [...state, image]) }/>
+                            <img src={errorImage.includes(`${api.defaults.baseURL}/static/${image}`) ? ProductImage404 : `${api.defaults.baseURL}/static/${image}`} alt={product.name} aria-label={product.name} onClick={() => setActiveImage(image)} onError={() => setErrorImage(state => [...state, image]) }/>
                         ) )}
                     </div>
-                    <img src={errorImage.includes(activeImage) ? ProductImage404 : activeImage} />
+                    <img src={errorImage.includes(`${api.defaults.baseURL}/static/${activeImage}`) ? ProductImage404 : `${api.defaults.baseURL}/static/${activeImage}`} />
                 </div>
                 <div className={styles.__content}>
                     <h3 className="product-card__name">{product.name}</h3>
